@@ -1,6 +1,0 @@
-streamlit>=1.42
-pandas>=2.2
-requests>=2.32
-altair>=5.5
-folium>=0.16
-streamlit-folium>=0.24
