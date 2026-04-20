@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 from datetime import datetime
 
 # =========================
@@ -18,7 +19,7 @@ def safe_rain(v):
         v = float(v)
         if v < 0:
             return 0.0
-        return v
+        return round(v,1)
     except:
         return 0.0
 
@@ -26,13 +27,14 @@ def safe_rain(v):
 # PREVISÃO
 # =========================
 def get_forecast():
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}&daily=precipitation_sum&timezone=auto"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}&daily=precipitation_sum,precipitation_probability_max&timezone=auto"
     r = requests.get(url).json()
 
     days = r["daily"]["time"]
     rain = [safe_rain(x) for x in r["daily"]["precipitation_sum"]]
+    prob = r["daily"]["precipitation_probability_max"]
 
-    return days, rain
+    return days, rain, prob
 
 # =========================
 # TELEGRAM
@@ -42,59 +44,60 @@ def send(msg):
     requests.post(url, data={"chat_id": CHAT_ID, "text": msg})
 
 # =========================
+# FORMATAR DIAS
+# =========================
+def format_day(date_str, i):
+    d = datetime.strptime(date_str, "%Y-%m-%d")
+
+    if i == 0:
+        return "Hoje"
+    if i == 1:
+        return "Amanhã"
+
+    nomes = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"]
+    return f"{nomes[d.weekday()]} {d.strftime('%d/%m')}"
+
+# =========================
 # TEXTO MANHÃ
 # =========================
-def build_morning(days, rain):
-    return f"""
-📡 RELATÓRIO CLIMA – MANHÃ
+def build_morning(days, rain, prob):
+    texto = "📡 RELATÓRIO CLIMA – MANHÃ\n\n📍 Sua roça\n\n"
 
-📍 Sua roça
+    for i in range(5):
+        texto += f"{format_day(days[i],i)}: {rain[i]} mm | prob {prob[i]}%\n"
 
-🌧️ Situação:
-Instabilidade fraca
+    texto += "\n🌱 Recomendação:\nAGUARDAR\n\n⏰ 07:00"
 
-📊 Previsão:
-Hoje: {rain[0]} mm
-Amanhã: {rain[1]} mm
-{days[2]}: {rain[2]} mm
-
-🌱 Recomendação:
-AGUARDAR
-
-⏰ 07:00
-"""
+    return texto
 
 # =========================
 # TEXTO TARDE
 # =========================
-def build_afternoon(days, rain):
-    return f"""
-📡 ALERTA CLIMA – TARDE
+def build_afternoon(days, rain, prob):
+    texto = "📡 ALERTA CLIMA – TARDE\n\n📍 Sua roça\n\n"
 
-🌧️ Atualização:
-Radar sem força
+    texto += f"Hoje: {rain[0]} mm\n"
+    texto += f"Amanhã: {rain[1]} mm\n\n"
 
-📊 Hoje: {rain[0]} mm
+    texto += "🌱 Recomendação:\nAGUARDAR\n\n⏰ 13:00"
 
-🌱 Recomendação:
-AGUARDAR
-
-⏰ 13:00
-"""
+    return texto
 
 # =========================
 # UI
 # =========================
 st.title("🌦️ Clima da Roça")
 
-days, rain = get_forecast()
+days, rain, prob = get_forecast()
 
 st.write("### Previsão")
-for d, r in zip(days[:5], rain[:5]):
-    st.write(d, "→", r, "mm")
 
+for i in range(5):
+    st.write(f"{format_day(days[i],i)} → {rain[i]} mm")
+
+# BOTÕES
 if st.button("📤 Enviar manhã"):
-    send(build_morning(days, rain))
+    send(build_morning(days, rain, prob))
 
 if st.button("📤 Enviar tarde"):
-    send(build_afternoon(days, rain))
+    send(build_afternoon(days, rain, prob))
