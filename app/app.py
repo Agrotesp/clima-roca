@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
+
 # =========================================================
 # CONFIG
 # =========================================================
@@ -21,6 +22,7 @@ DEFAULT_LON = float(st.secrets.get("LONGITUDE", -38.037884))
 TELEGRAM_BOT_TOKEN = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = st.secrets.get("TELEGRAM_CHAT_ID", "")
 
+
 # =========================================================
 # ESTILO
 # =========================================================
@@ -31,21 +33,22 @@ st.markdown(
         background: linear-gradient(180deg, #0b1220 0%, #101828 100%);
     }
     .block-container {
-        padding-top: 1.2rem;
+        padding-top: 1.1rem;
         padding-bottom: 2rem;
-        max-width: 1350px;
+        max-width: 1380px;
     }
     .hero {
-        padding: 18px 22px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, rgba(16,24,40,0.98), rgba(16,24,40,0.85));
+        padding: 20px 24px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(16,24,40,0.98), rgba(30,41,59,0.90));
         border: 1px solid rgba(255,255,255,0.08);
         margin-bottom: 14px;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.25);
     }
     .hero h1 {
         margin: 0;
         color: #f8fafc;
-        font-size: 2rem;
+        font-size: 2.1rem;
         font-weight: 800;
     }
     .hero p {
@@ -98,10 +101,22 @@ st.markdown(
         border-radius: 14px;
         padding: 12px 14px;
     }
+    .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: rgba(255,255,255,0.08);
+        color: #e2e8f0;
+        margin-right: 6px;
+        margin-bottom: 6px;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 # =========================================================
 # HELPERS
@@ -533,6 +548,7 @@ updated_str = forecast_data["updated_at"].strftime("%d/%m/%Y %H:%M")
 
 # Top cards
 c1, c2, c3, c4 = st.columns(4)
+
 with c1:
     st.markdown(
         f"""
@@ -544,6 +560,7 @@ with c1:
         """,
         unsafe_allow_html=True,
     )
+
 with c2:
     st.markdown(
         f"""
@@ -555,6 +572,7 @@ with c2:
         """,
         unsafe_allow_html=True,
     )
+
 with c3:
     next3_total = daily["rain_mm"].head(3).sum()
     st.markdown(
@@ -567,6 +585,7 @@ with c3:
         """,
         unsafe_allow_html=True,
     )
+
 with c4:
     conf3 = int(daily["confidence"].head(3).mean())
     st.markdown(
@@ -686,12 +705,12 @@ tab1, tab2, tab3, tab4 = st.tabs(
 
 with tab1:
     st.code(msg_morning, language="text")
-    c1, c2 = st.columns([1, 1])
-    with c1:
+    col_a, col_b = st.columns(2)
+    with col_a:
         if st.button("📤 Enviar manhã agora", use_container_width=True):
             ok, info = send_telegram_message(msg_morning)
             st.success(info) if ok else st.error(info)
-    with c2:
+    with col_b:
         st.download_button(
             "⬇️ Baixar texto da manhã",
             data=msg_morning,
@@ -701,12 +720,12 @@ with tab1:
 
 with tab2:
     st.code(msg_afternoon, language="text")
-    c1, c2 = st.columns([1, 1])
-    with c1:
+    col_a, col_b = st.columns(2)
+    with col_a:
         if st.button("📤 Enviar tarde agora", use_container_width=True):
             ok, info = send_telegram_message(msg_afternoon)
             st.success(info) if ok else st.error(info)
-    with c2:
+    with col_b:
         st.download_button(
             "⬇️ Baixar texto da tarde",
             data=msg_afternoon,
@@ -716,12 +735,12 @@ with tab2:
 
 with tab3:
     st.code(msg_arriving, language="text")
-    c1, c2 = st.columns([1, 1])
-    with c1:
+    col_a, col_b = st.columns(2)
+    with col_a:
         if st.button("📤 Enviar alerta de aproximação", use_container_width=True):
             ok, info = send_telegram_message(msg_arriving)
             st.success(info) if ok else st.error(info)
-    with c2:
+    with col_b:
         st.download_button(
             "⬇️ Baixar alerta de aproximação",
             data=msg_arriving,
@@ -731,12 +750,12 @@ with tab3:
 
 with tab4:
     st.code(msg_ideal, language="text")
-    c1, c2 = st.columns([1, 1])
-    with c1:
+    col_a, col_b = st.columns(2)
+    with col_a:
         if st.button("📤 Enviar condição ideal", use_container_width=True):
             ok, info = send_telegram_message(msg_ideal)
             st.success(info) if ok else st.error(info)
-    with c2:
+    with col_b:
         st.download_button(
             "⬇️ Baixar condição ideal",
             data=msg_ideal,
@@ -748,7 +767,7 @@ st.markdown("---")
 st.markdown(
     f"""
     <div class="small-note">
-        Dados atualizados no app em {updated_str}. A previsão vem do Open-Meteo; o histórico diário usa NASA POWER; o radar ao vivo pode ser aberto pelo link do RainViewer.
+        Dados atualizados no app em {updated_str}. Previsão: Open-Meteo | Histórico: NASA POWER | Radar ao vivo: RainViewer.
     </div>
     """,
     unsafe_allow_html=True,
