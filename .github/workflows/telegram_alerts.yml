@@ -1,0 +1,16 @@
+name: Telegram Alerts
+
+on:
+  schedule:
+    - cron: "0 10 * * *"   # 07:00 Brasil
+    - cron: "0 16 * * *"   # 13:00 Brasil
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send message
+        run: |
+          curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=Teste automático funcionando"
