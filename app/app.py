@@ -191,46 +191,67 @@ def send_telegram_message(message: str) -> tuple[bool, str]:
 # =========================================================
 @st.cache_data(ttl=1800, show_spinner=False)
 def get_forecast(lat: float, lon: float) -> dict:
+
     url = (
-        "https://api.open-meteo.com/v1/forecast"
-        f"?latitude={lat}&longitude={lon}"
+        f"https://api.open-meteo.com/v1/forecast?"
+        f"latitude={lat}&longitude={lon}"
         "&daily=precipitation_sum,precipitation_probability_max,"
         "temperature_2m_max,temperature_2m_min"
         "&hourly=precipitation,precipitation_probability,temperature_2m"
-        "&forecast_days=7&timezone=auto"
+        "&timezone=auto"
     )
-   
+
     try:
-    r = requests.get(url, timeout=30)
 
-    if r.status_code != 200:
-        st.error(f"Erro API clima: {r.status_code}")
+        r = requests.get(url, timeout=30)
+
+        if r.status_code != 200:
+            st.error(f"Erro API clima: {r.status_code}")
+            st.stop()
+
+        j = r.json()
+
+    except Exception as e:
+        st.error(f"Erro ao buscar previsão: {e}")
         st.stop()
-
-    j = r.json()
-
-except Exception as e:
-    st.error(f"Erro ao buscar previsão: {e}")
-    st.stop()
 
     daily = pd.DataFrame(
         {
             "date": j["daily"]["time"],
             "rain_mm": [safe_rain(v) for v in j["daily"]["precipitation_sum"]],
-            "prob": [int(to_float(v, 0)) for v in j["daily"]["precipitation_probability_max"]],
-            "tmax": [round(to_float(v, 0), 1) for v in j["daily"]["temperature_2m_max"]],
-            "tmin": [round(to_float(v, 0), 1) for v in j["daily"]["temperature_2m_min"]],
+            "prob": [
+                int(to_float(v, 0))
+                for v in j["daily"]["precipitation_probability_max"]
+            ],
+            "tmax": [
+                round(to_float(v, 0), 1)
+                for v in j["daily"]["temperature_2m_max"]
+            ],
+            "tmin": [
+                round(to_float(v, 0), 1)
+                for v in j["daily"]["temperature_2m_min"]
+            ],
         }
     )
 
     hourly = pd.DataFrame(
         {
             "time": j["hourly"]["time"],
-            "rain_mm": [safe_rain(v) for v in j["hourly"]["precipitation"]],
-            "prob": [int(to_float(v, 0)) for v in j["hourly"]["precipitation_probability"]],
-            "temp": [round(to_float(v, 0), 1) for v in j["hourly"]["temperature_2m"]],
+            "rain_mm": [
+                safe_rain(v)
+                for v in j["hourly"]["precipitation"]
+            ],
+            "prob": [
+                int(to_float(v, 0))
+                for v in j["hourly"]["precipitation_probability"]
+            ],
+            "temp": [
+                round(to_float(v, 0), 1)
+                for v in j["hourly"]["temperature_2m"]
+            ],
         }
     )
+
     hourly["time"] = pd.to_datetime(hourly["time"])
 
     return {
@@ -238,7 +259,6 @@ except Exception as e:
         "hourly": hourly,
         "updated_at": datetime.now(),
     }
-
 
 @st.cache_data(ttl=21600, show_spinner=False)
 def get_recent_history(lat: float, lon: float) -> pd.DataFrame:
