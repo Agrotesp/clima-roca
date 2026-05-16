@@ -199,9 +199,19 @@ def get_forecast(lat: float, lon: float) -> dict:
         "&hourly=precipitation,precipitation_probability,temperature_2m"
         "&forecast_days=7&timezone=auto"
     )
+   
+    try:
     r = requests.get(url, timeout=30)
-    r.raise_for_status()
+
+    if r.status_code != 200:
+        st.error(f"Erro API clima: {r.status_code}")
+        st.stop()
+
     j = r.json()
+
+except Exception as e:
+    st.error(f"Erro ao buscar previsão: {e}")
+    st.stop()
 
     daily = pd.DataFrame(
         {
